@@ -168,3 +168,33 @@ export async function computeKSpaceAndRecon(imageUrl: string, maxDim = 256): Pro
   const reconUrl = renderReconFromSpectrum(spectrum, rows, cols)
   return { kspaceUrl, reconUrl, rows, cols }
 }
+
+export async function computeSpectrumAndRecon(imageUrl: string, maxDim = 256): Promise<{ spectrum: Complex[][]; rows: number; cols: number; kspaceUrl: string; reconUrl: string }> {
+  const { gray, rows, cols } = await loadAndGrayscale(imageUrl, maxDim)
+  const spectrum = computeSpectrum(gray, rows, cols)
+  const kspaceUrl = renderKspace(spectrum, rows, cols)
+  const reconUrl = renderReconFromSpectrum(spectrum, rows, cols)
+  return { spectrum, rows, cols, kspaceUrl, reconUrl }
+}
+
+export function renderReconFromCircle(
+  spectrum: Complex[][],
+  rows: number,
+  cols: number,
+  cx: number,
+  cy: number,
+  radius: number
+): string {
+  const r2 = radius * radius
+  const masked: Complex[][] = new Array(rows)
+  for (let y = 0; y < rows; y++) {
+    masked[y] = new Array(cols)
+    const dy = y - cy
+    for (let x = 0; x < cols; x++) {
+      const dx = x - cx
+      const inside = dx * dx + dy * dy <= r2
+      masked[y][x] = inside ? (spectrum[y][x] as any) : (math.complex(0, 0) as unknown as Complex)
+    }
+  }
+  return renderReconFromSpectrum(masked, rows, cols)
+}
