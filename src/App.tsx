@@ -5,7 +5,7 @@ import Spinner from './components/Spinner'
 import Modal from './components/Modal'
 import ControlPanel from './components/ControlPanel'
 import { computeSpectrumAndRecon } from './lib/kspace'
-import KSpaceOverlay from './components/KSpaceOverlay'
+import KSpaceCanvas from './components/KSpaceCanvas'
 
 function App() {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
@@ -145,6 +145,8 @@ function App() {
     }
   }
 
+  // Overlay drawing moved into KSpaceCanvas component
+
   const clearSelection = () => {
     setImageUrl(null)
     setKspaceUrl(null)
@@ -185,6 +187,7 @@ function App() {
 
   // When overlay moves, update recon from circular mask
   const onOverlayMove = (centerNat: { x: number; y: number }, radiusNat: number) => {
+    console.log({centerNat, radiusNat})
     // Called after selection is finished (debounced in overlay)
     setCircleCenter(centerNat)
     if (rows == null || cols == null) return
@@ -241,21 +244,20 @@ function App() {
       <div className="flex-1 flex justify-between flex-col md:flex-row min-h-0 max-[767px]:space-y-2 sm:space-y-2 md:space-x-4 md:space-y-0">
         <Preview title="K-space (log magnitude)" className="flex-1 flex flex-col" bodyClassName="flex-1 flex items-center justify-center border-[#72757e]">
           {processing && <div className="p-4"><Spinner /></div>}
-          {!processing && kspaceUrl && (
+          {!processing && kspaceUrl && rows != null && cols != null && (
             <div className="relative max-w-full max-h-full">
-              <img src={kspaceUrl} alt="K-space" className="max-w-full max-h-full object-contain" />
-              {rows != null && cols != null && (
-                <KSpaceOverlay
-                  show={selecting}
-                  naturalWidth={cols}
-                  naturalHeight={rows}
-                  radiusPx={radiusPx}
-                  center={circleCenter}
-                  disabled={reconBusy}
-                  onMove={onOverlayMove}
-                  onResize={(r) => setRadiusPx(r)}
-                />
-              )}
+              <KSpaceCanvas
+                kspaceUrl={kspaceUrl}
+                naturalWidth={cols}
+                naturalHeight={rows}
+                show={selecting}
+                radiusPx={radiusPx}
+                center={circleCenter}
+                disabled={reconBusy}
+                onMove={onOverlayMove}
+                onResize={(r) => setRadiusPx(r)}
+                className="block max-w-full max-h-full"
+              />
             </div>
           )}
         </Preview>
